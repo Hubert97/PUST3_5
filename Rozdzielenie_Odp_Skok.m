@@ -31,7 +31,8 @@ end;
 
 plot(GT(:,1)); hold on 
 plot(GT(:,2)); plot(GT(:,3)); plot(GT(:,4)); hold off
-
+clear i;
+clear j;
 
 G1T1=GT(:,1);
 G1T3=GT(:,2);
