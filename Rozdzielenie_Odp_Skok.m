@@ -21,10 +21,11 @@ plot(GT(:,1)); hold on
 plot(GT(:,2)); plot(GT(:,3)); plot(GT(:,4)); hold off
 %skalowanie
 Prescaler=zeros(4,1);
+Du=[10 10 10 10];
 for i=1:4
     Prescaler(i)=GT(1,i);
     for j=1:200
-        GT(j,i)=GT(j,i)-Prescaler(i);
+        GT(j,i)=(GT(j,i)-Prescaler(i))/Du(i);
     end;
   GT(:,i)=  No_Negatives(GT(:,i));
 end;
