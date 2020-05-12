@@ -9,7 +9,7 @@ close all
     u_max=100;
     u_min=0;
     
-    load('rozdzielone_odp_skokowe.mat', 'GT')
+    load('odp_skok_aproks.mat', 'GT_aproksym')
     
     D=150; N=35; Nu=5; lambda=1;
     Upp=[30 35];
@@ -18,7 +18,7 @@ close all
     BigMp=cell(1,4); %po wykonaniu ponizszej petli jest zamieniona na macierz 2x2
     smallMp=zeros(N,D-1);        %macierz ma wymiary Nx(D-1)
     for j=1:4
-        gotowa_odp_skokowa=GT(:,j);
+        gotowa_odp_skokowa=GT_aproksym(:,j);
         for i=1:D-1 %wypelnianie macierzy Mp
            smallMp(1:N, i)=gotowa_odp_skokowa(i+1:N+i)-gotowa_odp_skokowa(i);
         end
@@ -32,7 +32,7 @@ close all
     for i2=1:4
         smallM=zeros(N, Nu);
         i=0;
-        gotowa_odp_skokowa=GT(:,i2);
+        gotowa_odp_skokowa=GT_aproksym(:,i2);
         for j=1:Nu  %wypelnianie macierzy trojkatnej dolnej M
            smallM(j:N,j)=gotowa_odp_skokowa(1:N-i).';  
            i=i+1;
@@ -142,7 +142,7 @@ close all
         sendControls([5,6]    ,... send for these elements
                      controls);  % new corresponding control values
         subplot(2,1,1); 
-        h=plot(Y); hold on; legend; stairs(yzad(:,1), '--','DisplayName', 'yzad1');
+        h=plot(Y); hold on; legend('Location','northwest'); stairs(yzad(:,1), '--','DisplayName', 'yzad1');
         stairs(yzad(:,2), '--','DisplayName', 'yzad2'); hold off;  drawnow
         U = [U; controls];     subplot(2,1,2); stairs(U); ylim([-5,105]); drawnow
         
