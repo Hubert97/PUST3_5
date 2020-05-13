@@ -1,23 +1,22 @@
-clear all
-close all
-    %addpath('F:\SerialCommunication'); % add a path to the functions
-    initSerialControl COM3 % initialise com port
+function [Y, U, yzad] = mystep(sim_time)
+    initSerialControl COM3
+    object = HeatingCooling(); % walk into lab
     Y = [];
     U = [];
+    k = 0;
+    controls = [0, 0];
     k = 1;
     ny=2;
     nu=2;
     yzad=[0 0];
-%     u_max=100;
-%     u_min=0;
-    
-    load('rw_odp_skok_aproks.mat', 'GT_aproksym')
-    
-    D=150; N=50; Nu=35; lambda=1;
     Upp=[20 25];
     Ypp=[103.1879  113.6240];
     u_max=100-Upp;
     u_min=0-Upp;
+    
+    load('rw_odp_skok_aproks.mat', 'GT_aproksym')
+    
+    D=150; N=50; Nu=35; lambda=1;
     
     
     S=cell(N+D-1,1);
@@ -58,32 +57,38 @@ close all
     deltaUP=zeros((D-1)*nu,1);
     K=inv(M'*bigPsi*M+bigLambda)*M'*bigPsi;
     K1=K(1:nu,:);
-    
-    
-    while(1)
+    while(k < sim_time)
         %% obtaining measurements
-        measurements = readMeasurements([1,3]); % read measurements 1 and 3
+        measurements = object.getMeasurementsSim(); % read measurements 1 and 3
+        
+        noise = normrnd(0, 1, [size(measurements), 1]);
+        measurements = measurements + noise;
+        
+        measurements = measurements';
         
 %         %% processing of the measurements and new control values calculation
-        disp(measurements); % process measurements
+         disp(measurements); % process measurements
 %         
 %         %% sending new values of control signals
+        if (k == 1)
+            controls = [23, 28];
+        end
         if(    k <  10)
             if k>0
-                yzad(k,:)=Ypp;
+                yzad(k,:)=[25 35];
             end
         elseif(k <  50)
-                yzad(k,:)=Ypp;
+                yzad(k,:)=[25 35];
         elseif(k < 100)
-                yzad(k,:)=[100 80];
+                yzad(k,:)=[50 40];
         elseif(k < 150)
-            yzad(k,:)=[80 140];
+            yzad(k,:)=[30 55];
         elseif(k < 200)
-            yzad(k,:)=[120 75];
+            yzad(k,:)=[45 55];
         elseif(k < 250)
-            yzad(k,:)=[90 100];
+            yzad(k,:)=[50 30];
         else
-            yzad(k,:)=[140 105]';
+            yzad(k,:)=[80 65];
         end
         
         
@@ -102,11 +107,6 @@ close all
         elseif k==2
             deltaUP(1:2,1)=u(k-1)';
         end
-%         for i=1:(D-1)*nu
-%             if k-(i+1)>0
-%                 deltaUP(i:i+1,1)=u(k-i)'-u(k-(i+1))';
-%             end
-%         end
         Y0=Y_wek+Mp*deltaUP;
         deltaU=K*(Yzad-Y0);
         deltaY=M*deltaU;
@@ -137,18 +137,27 @@ close all
         yzad(k,:)=yzad(k,:)+Ypp;
         sendControls([5,6]    ,... send for these elements
                      controls);  % new corresponding control values
-        subplot(2,1,1); 
-        h=plot(Y); hold on; legend('Location','northwest'); stairs(yzad(:,1), '--','DisplayName', 'yzad1');
-        stairs(yzad(:,2), '--','DisplayName', 'yzad2'); hold off;  drawnow
-        U = [U; controls];     subplot(2,1,2); stairs(U); ylim([-5,105]); drawnow
+%         subplot(2,1,1); 
+%         h=plot(Y); hold on; legend('Location','northwest'); stairs(yzad(:,1), '--','DisplayName', 'yzad1');
+%         stairs(yzad(:,2), '--','DisplayName', 'yzad2'); hold off;  drawnow
+         U = [U; controls];%     subplot(2,1,2); stairs(U); ylim([-5,105]); drawnow
         
         
         k = k+1;
+        
+        
+        
+        object.setControlsSim(controls');  % new corresponding control values
+        
+        
+          
+        
         %% synchronising with the control process
-        waitForNewIteration(); % wait for new batch of measurements to be ready
+        object.nextStepSim();
+        object.refresh();
     end
-%     [Y,U]=step(300);
-%     figure
-%     subplot(2,1,1); plot(Y);
-%     subplot(2,1,2); stairs(U); ylim([-5,105]);
-
+         subplot(2,1,1); 
+         h=plot(Y); hold on; legend('Location','northwest'); stairs(yzad(:,1), '--','DisplayName', 'yzad1');
+         stairs(yzad(:,2), '--','DisplayName', 'yzad2'); hold off;  drawnow
+         subplot(2,1,2); stairs(U); ylim([-5,105]); drawnow
+end
