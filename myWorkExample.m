@@ -12,8 +12,8 @@ close all
     load('odp_skok_aproks.mat', 'GT_aproksym')
     
     D=150; N=35; Nu=5; lambda=1;
-    Upp=[30 35];
-    Ypp=[124  132];
+    Upp=[0 0];
+    Ypp=[0  0];
     
     BigMp=cell(1,4); %po wykonaniu ponizszej petli jest zamieniona na macierz 2x2
     smallMp=zeros(N,D-1);        %macierz ma wymiary Nx(D-1)
@@ -49,7 +49,7 @@ close all
         for j=1:2
             M=BigM(i,j);
             M=cell2mat(M);
-            K(i,j)={inv(M.'*M+lambda*I)*M.'};   %macierz K
+            K(i,j)={ inv(M.'*M+lambda*I)*M.' };   %macierz K
         end
     end
     K_1={K{1,1}(1,1:N), K{1,2}(1,1:N);...
@@ -117,7 +117,9 @@ close all
             end
             sumaIloczynowKuDeltaUp=sumaIloczynowKuDeltaUp+iloczynyKuDeltaUp{i,j}(:,:);
         end
-        delta_u=e*Ke-sumaIloczynowKuDeltaUp;
+        delta_u=e*Ke-sumaIloczynowKuDeltaUp+Upp;
+        
+%         u(k,:)=u(k,:)+Upp;
         
         if k<2
             u(k,:)=delta_u;
@@ -137,8 +139,8 @@ close all
             u(k,2)=u_min;
         end
         
-        controls=u(k,:)+Upp;
-        yzad(k,:)=yzad(k,:)+Ypp;
+        controls=u(k,:); %+Upp
+        yzad(k,:)=yzad(k,:)+Ypp;%+Ypp;
         sendControls([5,6]    ,... send for these elements
                      controls);  % new corresponding control values
         subplot(2,1,1); 
